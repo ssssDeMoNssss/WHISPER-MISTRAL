@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>whisper_from_sssDeMoNsss — говори, не печатай.</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --yellow: #FFE700;
+    --cyan:   #00F5FF;
+    --pink:   #FF003C;
+    --dark:   #0A0A0F;
+    --darker: #050508;
+    --panel:  #0D0D1A;
+    --grid:   rgba(0,245,255,0.04);
+    --glow-y: 0 0 20px rgba(255,231,0,0.6), 0 0 60px rgba(255,231,0,0.2);
+    --glow-c: 0 0 20px rgba(0,245,255,0.6), 0 0 60px rgba(0,245,255,0.2);
+    --glow-p: 0 0 20px rgba(255,0,60,0.6),  0 0 60px rgba(255,0,60,0.2);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--darker);
+    color: #C8D0E0;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 17px;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── SCANLINES OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 9999;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg,
+      transparent, transparent 2px,
+      rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+  }
+
+  /* ── GRID BG ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridPulse 8s ease-in-out infinite;
+  }
+  @keyframes gridPulse {
+    0%,100% { opacity: 0.6; }
+    50%      { opacity: 1; }
+  }
+
+  /* ── NOISE TEXTURE ── */
+  .noise {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative; z-index: 10;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-bg-glow {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(ellipse, rgba(0,245,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    animation: breathe 4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+    50%      { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+  }
+
+  .hero-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0.7;
+    animation: fadeIn 1s ease forwards;
+  }
+
+  .hero-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: clamp(28px, 6vw, 72px);
+    line-height: 1.05;
+    margin-bottom: 8px;
+    animation: fadeIn 1s 0.2s ease both;
+  }
+
+  .hero-title .w1 { color: var(--yellow); text-shadow: var(--glow-y); }
+  .hero-title .w2 { color: #fff; }
+
+  .hero-sub {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(13px, 2vw, 20px);
+    color: var(--cyan);
+    letter-spacing: 3px;
+    margin-bottom: 32px;
+    text-shadow: var(--glow-c);
+    animation: fadeIn 1s 0.4s ease both;
+  }
+
+  .hero-desc {
+    max-width: 640px;
+    font-size: 18px;
+    line-height: 1.7;
+    color: #8A95A8;
+    margin-bottom: 48px;
+    animation: fadeIn 1s 0.6s ease both;
+  }
+  .hero-desc strong { color: var(--yellow); }
+
+  .glitch {
+    position: relative;
+    display: inline-block;
+  }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    font-family: inherit; font-size: inherit; font-weight: inherit;
+  }
+  .glitch::before {
+    color: var(--pink);
+    clip: rect(0, 900px, 0, 0);
+    animation: glitch1 3s infinite;
+  }
+  .glitch::after {
+    color: var(--cyan);
+    clip: rect(0, 900px, 0, 0);
+    animation: glitch2 3s infinite;
+  }
+  @keyframes glitch1 {
+    0%  { clip: rect(42px,9999px,44px,0); transform: translate(-4px,0); }
+    20% { clip: rect(12px,9999px,60px,0); transform: translate(4px,0); }
+    40% { clip: rect(0,0,0,0); }
+    100%{ clip: rect(0,0,0,0); }
+  }
+  @keyframes glitch2 {
+    0%  { clip: rect(0,0,0,0); }
+    60% { clip: rect(65px,9999px,68px,0); transform: translate(3px,0); }
+    80% { clip: rect(30px,9999px,90px,0); transform: translate(-3px,0); }
+    100%{ clip: rect(0,0,0,0); }
+  }
+
+  .hero-keys {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 48px;
+    animation: fadeIn 1s 0.8s ease both;
+  }
+
+  .key-item {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(0,245,255,0.04);
+    border: 1px solid rgba(0,245,255,0.15);
+    padding: 12px 20px;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.3s;
+  }
+  .key-item:hover {
+    background: rgba(0,245,255,0.1);
+    border-color: var(--cyan);
+    box-shadow: var(--glow-c);
+    transform: translateY(-2px);
+  }
+  .key-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    background: var(--yellow);
+    color: #000;
+    padding: 3px 8px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .key-text { font-size: 14px; color: #C8D0E0; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 40px; margin: 0;
+    overflow: hidden;
+  }
+  .divider-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0.3;
+  }
+  .divider-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 3px;
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    position: relative; z-index: 10;
+    padding: 80px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--pink);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1; max-width: 80px; height: 1px;
+    background: var(--pink);
+    opacity: 0.4;
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: clamp(22px, 3vw, 36px);
+    color: #fff;
+    margin-bottom: 40px;
+    line-height: 1.2;
+  }
+  .section-title span { color: var(--yellow); }
+
+  /* ── FEATURE CARDS ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid rgba(255,231,0,0.08);
+    padding: 32px;
+    position: relative;
+    transition: all 0.3s;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--yellow);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.3s;
+  }
+  .card:hover {
+    border-color: rgba(255,231,0,0.3);
+    background: rgba(255,231,0,0.03);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  .card:hover::before { transform: scaleY(1); }
+
+  .card-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--yellow);
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .card-body {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #7A8598;
+  }
+  .card-body strong { color: #C8D0E0; }
+
+  /* ── TRANSLATION SHOWCASE ── */
+  .translate-showcase {
+    background: var(--panel);
+    border: 1px solid rgba(0,245,255,0.12);
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .translate-showcase::after {
+    content: 'TRANSLATE_ENGINE_v2.1';
+    position: absolute; top: 16px; right: 24px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(0,245,255,0.2);
+    letter-spacing: 2px;
+  }
+
+  .translate-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: center;
+    margin-top: 32px;
+  }
+  @media (max-width: 600px) {
+    .translate-flow { grid-template-columns: 1fr; }
+    .arrow-col { transform: rotate(90deg); }
+  }
+
+  .lang-box {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 24px;
+    text-align: center;
+    position: relative;
+  }
+  .lang-box.ru { border-color: rgba(255,0,60,0.3); }
+  .lang-box.en { border-color: rgba(0,245,255,0.3); }
+  .lang-box.any{ border-color: rgba(255,231,0,0.3); }
+
+  .lang-flag {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .lang-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    opacity: 0.6;
+    margin-bottom: 8px;
+  }
+  .lang-example {
+    font-size: 15px;
+    font-style: italic;
+    color: #fff;
+    line-height: 1.5;
+  }
+
+  .arrow-col {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 4px;
+  }
+  .arrow-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--yellow);
+    letter-spacing: 2px;
+  }
+  .arrow-icon {
+    font-size: 28px;
+    color: var(--yellow);
+    text-shadow: var(--glow-y);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.6; transform: scale(0.9); }
+  }
+
+  /* ── MODES GRID ── */
+  .modes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    margin-top: 16px;
+  }
+  @media (max-width: 700px) { .modes-grid { grid-template-columns: 1fr; } }
+
+  .mode-panel {
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .mode-panel.ru-mode {
+    background: linear-gradient(135deg, rgba(255,0,60,0.08) 0%, var(--panel) 60%);
+    border: 1px solid rgba(255,0,60,0.2);
+  }
+  .mode-panel.en-mode {
+    background: linear-gradient(135deg, rgba(0,245,255,0.08) 0%, var(--panel) 60%);
+    border: 1px solid rgba(0,245,255,0.2);
+  }
+  .mode-panel:hover { transform: scale(1.01); }
+
+  .mode-version {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  .mode-panel.ru-mode .mode-version { color: var(--pink); }
+  .mode-panel.en-mode .mode-version { color: var(--cyan); }
+
+  .mode-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .mode-panel.ru-mode .mode-title { color: var(--pink); text-shadow: var(--glow-p); }
+  .mode-panel.en-mode .mode-title { color: var(--cyan); text-shadow: var(--glow-c); }
+
+  .mode-hotkey {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-bottom: 24px;
+  }
+  .hotkey-row {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 14px;
+  }
+  .hotkey-key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .mode-panel.ru-mode .hotkey-key { color: var(--pink); border-color: rgba(255,0,60,0.4); }
+  .mode-panel.en-mode .hotkey-key { color: var(--cyan); border-color: rgba(0,245,255,0.4); }
+
+  .mode-desc { font-size: 14px; color: #5A6578; line-height: 1.6; }
+
+  /* ── STATS BAR ── */
+  .stats {
+    position: relative; z-index: 10;
+    background: var(--panel);
+    border-top: 1px solid rgba(255,231,0,0.1);
+    border-bottom: 1px solid rgba(255,231,0,0.1);
+    padding: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 20px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.3s;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-item:hover { background: rgba(255,231,0,0.03); }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(24px, 4vw, 48px);
+    font-weight: 900;
+    color: var(--yellow);
+    text-shadow: var(--glow-y);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: #4A5568;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── TERMINAL BLOCK ── */
+  .terminal {
+    background: #000;
+    border: 1px solid rgba(0,245,255,0.2);
+    padding: 24px 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    line-height: 2;
+    position: relative;
+    overflow: hidden;
+  }
+  .terminal::before {
+    content: '● ● ●';
+    display: block;
+    color: rgba(255,255,255,0.15);
+    margin-bottom: 16px;
+    font-size: 10px;
+    letter-spacing: 4px;
+  }
+  .t-line { color: #4A5568; }
+  .t-cmd  { color: var(--cyan); }
+  .t-ok   { color: #00FF87; }
+  .t-warn { color: var(--yellow); }
+  .t-rec  { color: var(--pink); }
+  .t-cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--cyan);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ── PLATFORM PILLS ── */
+  .platforms {
+    display: flex; flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+  }
+  .platform-pill {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    border: 1px solid rgba(255,231,0,0.2);
+    color: var(--yellow);
+    clip-path: polygon(6px 0%, 100% 0%, calc(100%-6px) 100%, 0% 100%);
+    transition: all 0.3s;
+    cursor: default;
+  }
+  .platform-pill:hover {
+    background: rgba(255,231,0,0.08);
+    border-color: var(--yellow);
+    box-shadow: var(--glow-y);
+  }
+
+  /* ── GPU TABLE ── */
+  .gpu-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    margin-top: 24px;
+  }
+  .gpu-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(255,231,0,0.06);
+    color: var(--yellow);
+    font-size: 10px;
+    letter-spacing: 2px;
+    border-bottom: 1px solid rgba(255,231,0,0.15);
+  }
+  .gpu-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: #7A8598;
+    transition: all 0.2s;
+  }
+  .gpu-table tr:hover td {
+    background: rgba(0,245,255,0.03);
+    color: #C8D0E0;
+  }
+  .gpu-table td:first-child { color: #C8D0E0; }
+  .model-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .model-large { background: rgba(255,0,60,0.2);  color: var(--pink);  border: 1px solid rgba(255,0,60,0.3); }
+  .model-medium{ background: rgba(255,231,0,0.15); color: var(--yellow);border: 1px solid rgba(255,231,0,0.3); }
+  .model-small { background: rgba(0,245,255,0.1);  color: var(--cyan);  border: 1px solid rgba(0,245,255,0.2); }
+  .model-base  { background: rgba(255,255,255,0.05); color: #8A95A8;    border: 1px solid rgba(255,255,255,0.1); }
+
+  /* ── AUTHOR ── */
+  .author-section {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: 80px 40px;
+    border-top: 1px solid rgba(255,231,0,0.08);
+  }
+  .author-name {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(18px, 3vw, 32px);
+    font-weight: 900;
+    color: var(--yellow);
+    text-shadow: var(--glow-y);
+    margin-bottom: 8px;
+  }
+  .author-tagline {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 3px;
+    margin-bottom: 32px;
+  }
+  .author-links {
+    display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+  }
+  .author-link {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    padding: 10px 24px;
+    border: 1px solid rgba(0,245,255,0.3);
+    color: var(--cyan);
+    text-decoration: none;
+    letter-spacing: 2px;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.3s;
+  }
+  .author-link:hover {
+    background: rgba(0,245,255,0.1);
+    border-color: var(--cyan);
+    box-shadow: var(--glow-c);
+    transform: translateY(-2px);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: 24px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: #2A3040;
+    letter-spacing: 2px;
+    border-top: 1px solid rgba(255,255,255,0.03);
+  }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── CORNER DECORATIONS ── */
+  .corner-deco {
+    position: absolute;
+    width: 20px; height: 20px;
+    pointer-events: none;
+  }
+  .corner-deco.tl { top: 0; left: 0; border-top: 2px solid var(--yellow); border-left: 2px solid var(--yellow); }
+  .corner-deco.tr { top: 0; right: 0; border-top: 2px solid var(--yellow); border-right: 2px solid var(--yellow); }
+  .corner-deco.bl { bottom: 0; left: 0; border-bottom: 2px solid var(--yellow); border-left: 2px solid var(--yellow); }
+  .corner-deco.br { bottom: 0; right: 0; border-bottom: 2px solid var(--yellow); border-right: 2px solid var(--yellow); }
+
+  /* Red horizontal accent line */
+  .accent-line {
+    position: relative; z-index: 10;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--pink) 30%, var(--yellow) 50%, var(--pink) 70%, transparent 100%);
+    opacity: 0.4;
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg-glow"></div>
+
+  <div class="hero-tag">// VOICE_INPUT_SYSTEM :: LOCAL :: OFFLINE :: WIN+H_REPLACEMENT :: v2.0</div>
+
+  <h1 class="hero-title">
+    <span class="w1 glitch" data-text="whisper_from">whisper_from</span><br>
+    <span class="w2">sssDeMoNsss</span>
+  </h1>
+
+  <div class="hero-sub">— говори, не печатай —</div>
+
+  <p class="hero-desc">
+    Зажал клавишу. Сказал вслух. Текст появился.<br>
+    <strong>Без облака. Без подписок. Без интернета.</strong><br>
+    Win+H сломан для русских — наш работает лучше, чем диктовка на iPhone.
+  </p>
+
+  <div class="hero-keys">
+    <div class="key-item">
+      <span class="key-badge">CTRL ПРАВЫЙ</span>
+      <span class="key-text">Говоришь → текст на твоём языке</span>
+    </div>
+    <div class="key-item">
+      <span class="key-badge">ALT ПРАВЫЙ</span>
+      <span class="key-text">Говоришь → текст переводится</span>
+    </div>
+  </div>
+
+  <div class="platforms">
+    <div class="platform-pill">⊞ WINDOWS</div>
+    <div class="platform-pill">🐧 LINUX</div>
+    <div class="platform-pill">🍎 MACOS</div>
+  </div>
+</div>
+
+<div class="accent-line"></div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-item reveal">
+    <span class="stat-value">100%</span>
+    <span class="stat-label">OFFLINE</span>
+  </div>
+  <div class="stat-item reveal">
+    <span class="stat-value">1–3</span>
+    <span class="stat-label">СЕК НА ФРАЗУ</span>
+  </div>
+  <div class="stat-item reveal">
+    <span class="stat-value">50+</span>
+    <span class="stat-label">ЯЗЫКОВ</span>
+  </div>
+  <div class="stat-item reveal">
+    <span class="stat-value">10×</span>
+    <span class="stat-label">БЫСТРЕЕ WIN+H</span>
+  </div>
+  <div class="stat-item reveal">
+    <span class="stat-value">∞</span>
+    <span class="stat-label">ПОЛЬЗ. В СЕТИ</span>
+  </div>
+  <div class="stat-item reveal">
+    <span class="stat-value">0₽</span>
+    <span class="stat-label">СТОИМОСТЬ</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     WHY_INSTALL — Benefits section — above all feature descriptions
+═══════════════════════════════════════════════════════════════ -->
+<section style="max-width:900px;margin:0 auto 0 auto;padding:0 24px">
+
+  <!-- Main pitch -->
+  <div style="text-align:center;margin-bottom:48px">
+    <div style="display:inline-block;background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:6px 18px;font-family:monospace;font-size:12px;color:#58a6ff;letter-spacing:2px;margin-bottom:20px">
+      // WHY_YOU_NEED_THIS
+    </div>
+    <h2 style="font-size:clamp(26px,4vw,42px);font-weight:700;color:#f0f6fc;margin-bottom:16px;line-height:1.25">
+      Зачем тратить минуты на набор,<br>если можно сказать за секунды?
+    </h2>
+    <p style="font-size:16px;color:#8b949e;max-width:600px;margin:0 auto;line-height:1.7">
+      Один раз установил — и каждый день экономишь время.
+      Говоришь вслух, текст появляется там, где нужно. Без облаков, без подписок, без интернета.
+    </p>
+  </div>
+
+  <!-- Benefits grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:48px">
+
+    <!-- Benefit 1: Speed -->
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(63,185,80,0.12),transparent 70%)"></div>
+      <div style="font-size:28px;margin-bottom:12px">⚡</div>
+      <div style="font-size:15px;font-weight:600;color:#f0f6fc;margin-bottom:8px">В 5–10× быстрее печати</div>
+      <div style="font-size:13px;color:#8b949e;line-height:1.6">
+        Средний человек печатает 40–60 слов/мин. Говорит — 120–150 слов/мин.
+        Whisper транскрибирует фразу за <span style="color:#3fb950">0.5–1 секунду</span> на GPU.
+        Сообщение в Telegram, которое вы набирали 20 секунд — теперь 3 секунды.
+      </div>
+    </div>
+
+    <!-- Benefit 2: Quality vs iPhone -->
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(88,166,255,0.12),transparent 70%)"></div>
+      <div style="font-size:28px;margin-bottom:12px">🏆</div>
+      <div style="font-size:15px;font-weight:600;color:#f0f6fc;margin-bottom:8px">Точнее диктовки на iPhone</div>
+      <div style="font-size:13px;color:#8b949e;line-height:1.6">
+        Whisper large-v2 обучен на <span style="color:#58a6ff">680 000 часов аудио</span>, включая русскоязычные данные.
+        Правильно ставит запятые, точки, заглавные буквы. 
+        Понимает профессиональные термины, имена, акцент.
+      </div>
+    </div>
+
+    <!-- Benefit 3: Offline / Privacy -->
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(210,153,34,0.12),transparent 70%)"></div>
+      <div style="font-size:28px;margin-bottom:12px">🔒</div>
+      <div style="font-size:15px;font-weight:600;color:#f0f6fc;margin-bottom:8px">100% приватно, без интернета</div>
+      <div style="font-size:13px;color:#8b949e;line-height:1.6">
+        Ни одно слово не покидает твой компьютер.
+        Нет серверов, нет логов, нет слежки.
+        Работает <span style="color:#d29922">без интернета</span> — даже в самолёте или на даче.
+      </div>
+    </div>
+
+    <!-- Benefit 4: Translation -->
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(188,140,255,0.12),transparent 70%)"></div>
+      <div style="font-size:28px;margin-bottom:12px">🌐</div>
+      <div style="font-size:15px;font-weight:600;color:#f0f6fc;margin-bottom:8px">Перевод одной клавишей</div>
+      <div style="font-size:13px;color:#8b949e;line-height:1.6">
+        Говоришь по-русски — получаешь готовый английский прямо в поле чата.
+        Зажал <span style="color:#bc8cff">Правый Alt</span>, сказал фразу, отпустил —
+        перевод уже вставлен. Не нужно открывать переводчик.
+      </div>
+    </div>
+
+    <!-- Benefit 5: Works everywhere -->
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(63,185,80,0.08),transparent 70%)"></div>
+      <div style="font-size:28px;margin-bottom:12px">🖥️</div>
+      <div style="font-size:15px;font-weight:600;color:#f0f6fc;margin-bottom:8px">Работает в любом приложении</div>
+      <div style="font-size:13px;color:#8b949e;line-height:1.6">
+        Telegram, Discord, браузер, Word, блокнот, код — везде одинаково.
+        Не нужно переключаться, копировать, вставлять вручную.
+        Иконка в трее, никаких лишних окон.
+      </div>
+    </div>
+
+    <!-- Benefit 6: Any hardware -->
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:24px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(88,166,255,0.08),transparent 70%)"></div>
+      <div style="font-size:28px;margin-bottom:12px">💻</div>
+      <div style="font-size:15px;font-weight:600;color:#f0f6fc;margin-bottom:8px">Работает на любом железе</div>
+      <div style="font-size:13px;color:#8b949e;line-height:1.6">
+        NVIDIA GPU → <span style="color:#3fb950">0.5–1 сек/фраза</span> (large-v2)<br>
+        Ryzen 9 5950X CPU → <span style="color:#d29922">3–5 сек/фраза</span> (small)<br>
+        Ноутбук без GPU → <span style="color:#8b949e">5–15 сек/фраза</span> (tiny/base)<br>
+        Apple M1/M2 → <span style="color:#3fb950">2–4 сек/фраза</span> (medium, MPS)
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Time savings banner -->
+  <div style="background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border:1px solid #30363d;border-radius:16px;padding:32px;margin-bottom:48px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(63,185,80,0.08),transparent 60%)"></div>
+    <div style="font-family:monospace;font-size:11px;color:#3fb950;letter-spacing:2px;margin-bottom:16px">// REAL_WORLD_SAVINGS</div>
+    <h3 style="font-size:20px;color:#f0f6fc;margin-bottom:20px;font-weight:600">Сколько времени ты экономишь?</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #21262d">
+        <div style="font-size:11px;color:#58a6ff;font-family:monospace;margin-bottom:6px">TELEGRAM / DAY</div>
+        <div style="font-size:22px;font-weight:700;color:#3fb950;margin-bottom:4px">~15 мин</div>
+        <div style="font-size:12px;color:#6e7681">если пишешь 30+ сообщений в день</div>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #21262d">
+        <div style="font-size:11px;color:#58a6ff;font-family:monospace;margin-bottom:6px">EMAIL / WEEK</div>
+        <div style="font-size:22px;font-weight:700;color:#3fb950;margin-bottom:4px">~1.5 часа</div>
+        <div style="font-size:12px;color:#6e7681">для активного email-пользователя</div>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #21262d">
+        <div style="font-size:11px;color:#58a6ff;font-family:monospace;margin-bottom:6px">YEAR TOTAL</div>
+        <div style="font-size:22px;font-weight:700;color:#d29922;margin-bottom:4px">~100 часов</div>
+        <div style="font-size:12px;color:#6e7681">в год экономии рабочего времени</div>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #21262d">
+        <div style="font-size:11px;color:#58a6ff;font-family:monospace;margin-bottom:6px">COST</div>
+        <div style="font-size:22px;font-weight:700;color:#3fb950;margin-bottom:4px">0 ₽</div>
+        <div style="font-size:12px;color:#6e7681">один раз установил — навсегда бесплатно</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick comparison row -->
+  <div style="margin-bottom:56px">
+    <div style="font-family:monospace;font-size:11px;color:#8b949e;letter-spacing:2px;margin-bottom:20px;text-align:center">
+      // VS_ALTERNATIVES
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center">
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:20px">
+        <div style="font-size:13px;font-weight:600;color:#fc8181;margin-bottom:10px">Win+H (Microsoft)</div>
+        <div style="font-size:12px;color:#6e7681;line-height:1.8">
+          ✗ Русский отключён<br>✗ Только онлайн<br>✗ Данные в облаке<br>✗ Нет перевода
+        </div>
+      </div>
+      <div style="background:#0d1117;border:2px solid #3fb950;border-radius:10px;padding:20px;position:relative">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#3fb950;color:#0d1117;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;font-family:monospace">НАШЕ РЕШЕНИЕ</div>
+        <div style="font-size:13px;font-weight:600;color:#3fb950;margin-bottom:10px">whisper_from_sssDeMoNsss</div>
+        <div style="font-size:12px;color:#c9d1d9;line-height:1.8">
+          ✓ Русский — лучшее качество<br>✓ 100% офлайн<br>✓ Только на твоём ПК<br>✓ Перевод RU↔EN одной клавишей
+        </div>
+      </div>
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:20px">
+        <div style="font-size:13px;font-weight:600;color:#8b949e;margin-bottom:10px">iPhone диктовка</div>
+        <div style="font-size:12px;color:#6e7681;line-height:1.8">
+          ✗ Только на телефоне<br>✗ Данные на серверах Apple<br>✗ Нет перевода<br>✗ Нет вставки на ПК
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<div class="divider" style="margin-top:0">
+  <div class="divider-line"></div>
+  <div class="divider-text">CORE_FEATURES</div>
+  <div class="divider-line"></div>
+</div>
+
+<!-- FEATURES -->
+<section>
+  <div class="section-label">// SYSTEM.CAPABILITIES</div>
+  <h2 class="section-title">Что умеет <span>программа</span></h2>
+
+  <div class="cards">
+    <div class="card reveal">
+      <span class="card-icon">🎙️</span>
+      <div class="card-title">ГОЛОС → ТЕКСТ</div>
+      <div class="card-body">
+        Зажал кнопку — говоришь — отпустил. Текст <strong>мгновенно вставляется</strong> в любое активное окно: мессенджер, браузер, редактор кода, форма — куда угодно.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">🌐</span>
+      <div class="card-title">АВТО-ПЕРЕВОД</div>
+      <div class="card-body">
+        Говоришь по-русски — получаешь английский. Говоришь по-английски — получаешь русский. <strong>Одна клавиша</strong> — готовый перевод прямо в поле чата.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">🔒</span>
+      <div class="card-title">ПОЛНЫЙ ОФЛАЙН</div>
+      <div class="card-body">
+        Твои слова не уходят ни на какие серверы. <strong>Нет облака — нет утечек.</strong> Вся обработка происходит прямо на твоём компьютере.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">⚡</span>
+      <div class="card-title">GPU УСКОРЕНИЕ</div>
+      <div class="card-body">
+        Использует мощность твоей видеокарты NVIDIA или чипа Apple Silicon. <strong>1–3 секунды</strong> на любую фразу. Работает и на обычном CPU.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">✏️</span>
+      <div class="card-title">ОРФОГРАФИЯ И ПУНКТУАЦИЯ</div>
+      <div class="card-body">
+        Не нужно думать о запятых, точках и заглавных буквах. <strong>Программа ставит всё сама.</strong> Результат лучше, чем диктовка на iPhone.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">🖥️</span>
+      <div class="card-title">ЛЮБОЕ ПРИЛОЖЕНИЕ</div>
+      <div class="card-body">
+        Telegram, Discord, браузер, Word, блокнот, код — <strong>везде работает одинаково.</strong> Тихая иконка в системном трее, никаких лишних окон.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">🔤</span>
+      <div class="card-title">РУССКИЙ + АНГЛИЙСКИЙ</div>
+      <div class="card-body">
+        Говоришь по-русски, но вставляешь английские слова? <strong>Программа понимает оба языка</strong> одновременно и корректно распознаёт каждое слово.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">📊</span>
+      <div class="card-title">ВЕБ-ПАНЕЛЬ УПРАВЛЕНИЯ</div>
+      <div class="card-body">
+        Встроенный веб-интерфейс на <strong>localhost:8765</strong> — статистика слов, логи в реальном времени, переключение GPU/модели, редактор конфига прямо в браузере.
+      </div>
+    </div>
+    <div class="card reveal">
+      <span class="card-icon">🔧</span>
+      <div class="card-title">АВТОПОДБОР МОДЕЛИ</div>
+      <div class="card-body">
+        При установке программа <strong>автоматически определяет</strong> твою видеокарту и подбирает лучшую Whisper-модель. Можно сменить в любой момент без переустановки.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">
+  <div class="divider-line"></div>
+  <div class="divider-text">TRANSLATION_MATRIX</div>
+  <div class="divider-line"></div>
+</div>
+
+<!-- TRANSLATION -->
+<section>
+  <div class="section-label">// TRANSLATE.ENGINE</div>
+  <h2 class="section-title">Как работает <span>перевод</span></h2>
+
+  <div class="translate-showcase reveal">
+    <div class="corner-deco tl"></div>
+    <div class="corner-deco tr"></div>
+    <div class="corner-deco bl"></div>
+    <div class="corner-deco br"></div>
+
+    <p style="color:#7A8598; font-size:16px; line-height:1.7; max-width:600px;">
+      Представь: ты общаешься в видеочате с человеком, который не знает русского.
+      Вместо того чтобы мучительно вспоминать слова — просто <strong style="color:#fff">говоришь по-русски</strong>,
+      и программа мгновенно вставляет готовый английский текст прямо в поле чата.
+      Один зажатый Alt — и твои слова уже на другом языке.
+    </p>
+
+    <div class="translate-flow">
+      <div class="lang-box ru">
+        <span class="lang-flag">🇷🇺</span>
+        <div class="lang-name">ВЕРСИЯ RU-ENG</div>
+        <div class="lang-example">"Привет, как дела? Хочу познакомиться"</div>
+      </div>
+      <div class="arrow-col">
+        <span class="arrow-label">ALT_R</span>
+        <span class="arrow-icon">⟹</span>
+        <span class="arrow-label">ОФЛАЙН</span>
+      </div>
+      <div class="lang-box en">
+        <span class="lang-flag">🇬🇧</span>
+        <div class="lang-name">РЕЗУЛЬТАТ</div>
+        <div class="lang-example">"Hello, how are you? I'd like to get to know you"</div>
+      </div>
+    </div>
+
+    <div class="translate-flow" style="margin-top:24px">
+      <div class="lang-box en">
+        <span class="lang-flag">🇬🇧</span>
+        <div class="lang-name">ВЕРСИЯ ENG-RU</div>
+        <div class="lang-example">"I want to tell you something important"</div>
+      </div>
+      <div class="arrow-col">
+        <span class="arrow-label">ALT_R</span>
+        <span class="arrow-icon">⟹</span>
+        <span class="arrow-label">ONLINE</span>
+      </div>
+      <div class="lang-box ru">
+        <span class="lang-flag">🇷🇺</span>
+        <div class="lang-name">РЕЗУЛЬТАТ</div>
+        <div class="lang-example">"Я хочу сказать тебе кое-что важное"</div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; padding-top:24px; border-top:1px solid rgba(255,231,0,0.1);">
+      <p style="color:#4A5568; font-size:13px; font-family:'Share Tech Mono',monospace; letter-spacing:1px;">
+        ▸ RU→EN перевод: <span style="color:#00FF87">ОФЛАЙН</span> — не нужен интернет, Whisper переводит сам<br>
+        ▸ EN→RU перевод: <span style="color:var(--yellow)">ONLINE</span> — Google Translate, нужен интернет<br>
+        ▸ В консоли видны оба результата: оригинал и перевод одновременно
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="accent-line"></div>
+
+<!-- TWO VERSIONS -->
+<section>
+  <div class="section-label">// VERSION_SELECT</div>
+  <h2 class="section-title">Два режима — <span>один установщик</span></h2>
+  <p style="color:#5A6578; margin-bottom:32px; font-size:16px;">
+    При установке программа спрашивает: на каком языке ты говоришь?
+  </p>
+
+  <div class="modes-grid">
+    <div class="mode-panel ru-mode reveal">
+      <div class="corner-deco tl" style="border-color:var(--pink)"></div>
+      <div class="corner-deco br" style="border-color:var(--pink)"></div>
+      <div class="mode-version">VERSION_1 // whisper_from_sssDeMoNsss_RU-ENG</div>
+      <div class="mode-title">Говоришь по-РУССКИ</div>
+      <div class="mode-hotkey">
+        <div class="hotkey-row">
+          <span class="hotkey-key">CTRL ПРАВЫЙ</span>
+          <span style="color:#8A95A8">→ текст на русском языке</span>
+        </div>
+        <div class="hotkey-row">
+          <span class="hotkey-key">ALT ПРАВЫЙ</span>
+          <span style="color:#8A95A8">→ переводит в английский</span>
+        </div>
+      </div>
+      <div class="mode-desc">
+        Папка установки: <span style="color:#C8D0E0">C:\whisper-ptt</span><br>
+        Модель по умолчанию: medium<br>
+        Перевод в EN — офлайн, без интернета
+      </div>
+    </div>
+
+    <div class="mode-panel en-mode reveal">
+      <div class="corner-deco tl" style="border-color:var(--cyan)"></div>
+      <div class="corner-deco br" style="border-color:var(--cyan)"></div>
+      <div class="mode-version">VERSION_2 // whisper_from_sssDeMoNsss_ENG-RU</div>
+      <div class="mode-title">Говоришь по-АНГЛИЙСКИ</div>
+      <div class="mode-hotkey">
+        <div class="hotkey-row">
+          <span class="hotkey-key">CTRL ПРАВЫЙ</span>
+          <span style="color:#8A95A8">→ текст на английском языке</span>
+        </div>
+        <div class="hotkey-row">
+          <span class="hotkey-key">ALT ПРАВЫЙ</span>
+          <span style="color:#8A95A8">→ переводит в русский</span>
+        </div>
+      </div>
+      <div class="mode-desc">
+        Папка установки: <span style="color:#C8D0E0">C:\whisper-ptt-eng</span><br>
+        Модель по умолчанию: small<br>
+        Можно установить обе версии одновременно
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">
+  <div class="divider-line"></div>
+  <div class="divider-text">WIN_H_REPLACEMENT</div>
+  <div class="divider-line"></div>
+</div>
+
+<!-- WIN+H REPLACEMENT -->
+<section>
+  <div class="section-label">// WINDOWS_11.BROKEN_FOR_RU</div>
+  <h2 class="section-title">Win+H сломан для русских — <span>мы заменяем его</span></h2>
+
+  <p style="color:#5A6578; margin-bottom:36px; font-size:16px; line-height:1.7;">
+    Microsoft отключила голосовой ввод Win+H для русского языка после начала СВО и не планирует восстанавливать.
+    Именно для этого создан whisper_from_sssDeMoNsss — полноценная замена с лучшим качеством.
+  </p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-bottom:40px;">
+    <div style="background:rgba(255,0,60,0.06); border:1px solid rgba(255,0,60,0.2); padding:32px; position:relative;">
+      <div class="corner-deco tl" style="border-color:rgba(255,0,60,0.4)"></div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--pink); letter-spacing:3px; margin-bottom:16px; opacity:0.6;">// MICROSOFT WIN+H</div>
+      <div style="font-family:'Orbitron',monospace; font-size:18px; color:var(--pink); margin-bottom:20px;">❌ НЕ РАБОТАЕТ</div>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
+        <li style="font-size:14px; color:#5A6578;">✗ &nbsp;Русский язык отключён</li>
+        <li style="font-size:14px; color:#5A6578;">✗ &nbsp;Зависит от серверов Microsoft</li>
+        <li style="font-size:14px; color:#5A6578;">✗ &nbsp;Данные уходят в облако</li>
+        <li style="font-size:14px; color:#5A6578;">✗ &nbsp;Нет перевода</li>
+        <li style="font-size:14px; color:#5A6578;">✗ &nbsp;Только Windows, только один язык</li>
+        <li style="font-size:14px; color:#5A6578;">✗ &nbsp;Слабая орфография и пунктуация</li>
+      </ul>
+    </div>
+    <div style="background:rgba(0,245,255,0.05); border:1px solid rgba(0,245,255,0.2); padding:32px; position:relative;">
+      <div class="corner-deco tr" style="border-color:rgba(0,245,255,0.4)"></div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--cyan); letter-spacing:3px; margin-bottom:16px; opacity:0.6;">// WHISPER_FROM_SSSDEMONS</div>
+      <div style="font-family:'Orbitron',monospace; font-size:18px; color:var(--cyan); margin-bottom:20px; text-shadow:var(--glow-c);">✓ РАБОТАЕТ</div>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
+        <li style="font-size:14px; color:#C8D0E0;">✓ &nbsp;Русский, английский, 50+ языков</li>
+        <li style="font-size:14px; color:#C8D0E0;">✓ &nbsp;Полностью офлайн, ваше железо</li>
+        <li style="font-size:14px; color:#C8D0E0;">✓ &nbsp;Данные не покидают компьютер</li>
+        <li style="font-size:14px; color:#C8D0E0;">✓ &nbsp;Перевод RU↔EN одной клавишей</li>
+        <li style="font-size:14px; color:#C8D0E0;">✓ &nbsp;Windows / Linux / macOS</li>
+        <li style="font-size:14px; color:#C8D0E0;">✓ &nbsp;Лучше диктовки на iPhone</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
+<div class="divider">
+  <div class="divider-line"></div>
+  <div class="divider-text">CPU_MODE</div>
+  <div class="divider-line"></div>
+</div>
+
+<!-- CPU MODE SECTION -->
+<section>
+  <div class="section-label">// NO_GPU.CPU_ONLY</div>
+  <h2 class="section-title">Нет видеокарты? Работает и на CPU</h2>
+  <p class="section-desc">
+    whisper_from_sssDeMoNsss поддерживает работу без GPU — на любом современном процессоре.
+    Ноутбук, офисный ПК, встроенная графика — всё это работает.
+    Скорость зависит от модели и мощности процессора.
+  </p>
+
+  <!-- CPU BENCHMARK TABLE -->
+  <div style="overflow-x:auto; margin: 32px 0;">
+    <div class="section-label" style="margin-bottom:16px">// CPU_BENCHMARK_TABLE — model: small (int8), фраза ~3 секунды</div>
+    <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1px solid #2d3748;color:#68d391;">
+          <th style="text-align:left;padding:10px 14px;font-weight:600">Процессор</th>
+          <th style="text-align:center;padding:10px 14px">Ядра</th>
+          <th style="text-align:center;padding:10px 14px">RAM</th>
+          <th style="text-align:center;padding:10px 14px;color:#68d391">tiny<br><span style="font-size:10px;color:#718096">~0.5GB</span></th>
+          <th style="text-align:center;padding:10px 14px;color:#68d391">small<br><span style="font-size:10px;color:#718096">~1.3GB</span></th>
+          <th style="text-align:center;padding:10px 14px;color:#f6e05e">medium<br><span style="font-size:10px;color:#718096">~2.9GB</span></th>
+          <th style="text-align:center;padding:10px 14px">Рекомендуется</th>
+        </tr>
+      </thead>
+      <tbody style="color:#e2e8f0;">
+        <tr style="border-bottom:1px solid #1a202c;background:rgba(104,211,145,0.05)">
+          <td style="padding:10px 14px;color:#68d391;font-weight:600">AMD Ryzen 9 5950X</td>
+          <td style="text-align:center;padding:10px 14px">16 / 32</td>
+          <td style="text-align:center;padding:10px 14px">32+ GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~1–2 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~3–5 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~8–12 сек</td>
+          <td style="text-align:center;padding:10px 14px">small / medium</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;">
+          <td style="padding:10px 14px">AMD Ryzen 7 5800X / 7700X</td>
+          <td style="text-align:center;padding:10px 14px">8 / 16</td>
+          <td style="text-align:center;padding:10px 14px">16+ GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~1–2 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~4–7 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~12–18 сек</td>
+          <td style="text-align:center;padding:10px 14px">small</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;background:rgba(104,211,145,0.03)">
+          <td style="padding:10px 14px">Intel Core i9-13900K / i7-13700K</td>
+          <td style="text-align:center;padding:10px 14px">16–24 / 32</td>
+          <td style="text-align:center;padding:10px 14px">16+ GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~1–2 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~4–6 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~10–15 сек</td>
+          <td style="text-align:center;padding:10px 14px">small</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;">
+          <td style="padding:10px 14px">Intel Core i7-12700 / i5-13600K</td>
+          <td style="text-align:center;padding:10px 14px">8–12 / 16</td>
+          <td style="text-align:center;padding:10px 14px">16 GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~1–3 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~5–9 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~15–25 сек</td>
+          <td style="text-align:center;padding:10px 14px">small</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;background:rgba(104,211,145,0.03)">
+          <td style="padding:10px 14px">AMD Ryzen 5 5600X / 5600U</td>
+          <td style="text-align:center;padding:10px 14px">6 / 12</td>
+          <td style="text-align:center;padding:10px 14px">8–16 GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~2–3 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~7–12 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">~20–35 сек</td>
+          <td style="text-align:center;padding:10px 14px">small</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;">
+          <td style="padding:10px 14px">Intel Core i5-10400 / i7-10700</td>
+          <td style="text-align:center;padding:10px 14px">6–8 / 12–16</td>
+          <td style="text-align:center;padding:10px 14px">8–16 GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~2–4 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~8–14 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">~25–40 сек</td>
+          <td style="text-align:center;padding:10px 14px">base / small</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;background:rgba(104,211,145,0.03)">
+          <td style="padding:10px 14px">Apple M1 / M2 (MacBook)</td>
+          <td style="text-align:center;padding:10px 14px">8 / 8</td>
+          <td style="text-align:center;padding:10px 14px">8–16 GB unified</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~0.5–1 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~2–4 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#68d391">~5–9 сек</td>
+          <td style="text-align:center;padding:10px 14px">medium (MPS)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;">
+          <td style="padding:10px 14px">Intel Core i5-8250U (ноутбук)</td>
+          <td style="text-align:center;padding:10px 14px">4 / 8</td>
+          <td style="text-align:center;padding:10px 14px">8 GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~3–6 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">~15–25 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">~50–80 сек</td>
+          <td style="text-align:center;padding:10px 14px">base / tiny</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a202c;background:rgba(104,211,145,0.03)">
+          <td style="padding:10px 14px;color:#718096">AMD Ryzen 3 / 2-ядерный CPU (старый ноутбук)</td>
+          <td style="text-align:center;padding:10px 14px;color:#718096">2–4 / 4</td>
+          <td style="text-align:center;padding:10px 14px;color:#718096">4–8 GB</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">~8–15 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">~40–70 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">нецелесообразно</td>
+          <td style="text-align:center;padding:10px 14px;color:#718096">tiny (если вообще)</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 14px;color:#718096">Radeon RX Vega 8 (встроенная AMD APU)</td>
+          <td style="text-align:center;padding:10px 14px;color:#718096">8 CU (iGPU)</td>
+          <td style="text-align:center;padding:10px 14px;color:#718096">разделяет RAM</td>
+          <td style="text-align:center;padding:10px 14px;color:#f6e05e">~3–5 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">~15–30 сек</td>
+          <td style="text-align:center;padding:10px 14px;color:#fc8181">нецелесообразно</td>
+          <td style="text-align:center;padding:10px 14px;color:#718096">tiny / base (CPU mode)</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:11px;color:#4a5568;margin-top:10px">
+      * Время для фразы ~3 сек на модели с int8-квантизацией (faster-whisper). Реальные результаты зависят от частоты CPU, объёма и скорости RAM.
+    </div>
+  </div>
+
+  <!-- RAM REQUIREMENTS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:24px 0">
+    <div style="background:#1a202c;border:1px solid #2d3748;border-radius:8px;padding:20px">
+      <div class="section-label" style="margin-bottom:12px">// RAM_REQUIREMENTS</div>
+      <div style="font-size:14px;color:#e2e8f0;line-height:1.8">
+        <div>tiny / base: <span style="color:#68d391">4 GB RAM минимум</span></div>
+        <div>small:       <span style="color:#68d391">6 GB RAM</span></div>
+        <div>medium:      <span style="color:#f6e05e">8 GB RAM рекомендуется</span></div>
+        <div>large-v2:    <span style="color:#fc8181">12–16 GB RAM (только GPU режим)</span></div>
+        <div style="margin-top:10px;font-size:12px;color:#718096">
+          Сам Whisper + Python + система ≈ 2–3 GB накладных расходов.
+          Для комфортной работы: 8 GB+ для модели small, 16 GB+ для medium на CPU.
+        </div>
+      </div>
+    </div>
+    <div style="background:#1a202c;border:1px solid #2d3748;border-radius:8px;padding:20px">
+      <div class="section-label" style="margin-bottom:12px">// CPU_VS_GPU</div>
+      <div style="font-size:14px;color:#e2e8f0;line-height:1.8">
+        <div style="color:#68d391">✓ GPU RTX 3070 Ti:</div>
+        <div style="color:#68d391;margin-left:12px">large-v2 → 0.5–1 сек/фраза</div>
+        <div style="margin-top:8px;color:#f6e05e">≈ CPU Ryzen 9 5950X:</div>
+        <div style="color:#f6e05e;margin-left:12px">small → 3–5 сек/фраза</div>
+        <div style="margin-top:8px;color:#718096">Разница: GPU в 5–20 раз быстрее.</div>
+        <div style="margin-top:8px;font-size:12px;color:#718096">
+          Для PTT-режима (короткие фразы) CPU-режим вполне пригоден
+          на современных процессорах с моделью small.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">
+  <div class="divider-line"></div>
+  <div class="divider-text">NETWORK_SERVER_MODE</div>
+  <div class="divider-line"></div>
+</div>
+
+<!-- NETWORK / OFFICE MODE -->
+<section>
+  <div class="section-label">// OFFICE.LAN_MODE</div>
+  <h2 class="section-title">Одна видеокарта — <span>весь офис работает</span></h2>
+
+  <p style="color:#5A6578; margin-bottom:36px; font-size:16px; line-height:1.7;">
+    Не нужно покупать мощный GPU каждому. Достаточно <strong style="color:#C8D0E0">одного сервера с видеокартой</strong> в локальной сети —
+    и все пользователи офиса получают мгновенную транскрипцию через API, не нагружая свои компьютеры.
+  </p>
+
+  <div style="background:var(--panel); border:1px solid rgba(255,231,0,0.12); padding:48px; position:relative; margin-bottom:0;" class="reveal">
+    <div class="corner-deco tl"></div>
+    <div class="corner-deco br"></div>
+    <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:rgba(255,231,0,0.3); position:absolute; top:16px; right:24px; letter-spacing:2px;">NETWORK_ARCH_v2</div>
+
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:24px; align-items:center;">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="background:rgba(0,245,255,0.06); border:1px solid rgba(0,245,255,0.15); padding:16px; font-size:13px; color:#C8D0E0;">
+          💻 &nbsp;<span style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--cyan)">СЛАБЫЙ ПК #1</span><br>
+          <span style="color:#5A6578; font-size:12px;">Зажал Ctrl → аудио отправлено</span>
+        </div>
+        <div style="background:rgba(0,245,255,0.06); border:1px solid rgba(0,245,255,0.15); padding:16px; font-size:13px; color:#C8D0E0;">
+          💻 &nbsp;<span style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--cyan)">СЛАБЫЙ ПК #2</span><br>
+          <span style="color:#5A6578; font-size:12px;">Зажал Ctrl → аудио отправлено</span>
+        </div>
+        <div style="background:rgba(0,245,255,0.06); border:1px solid rgba(0,245,255,0.15); padding:16px; font-size:13px; color:#C8D0E0;">
+          💻 &nbsp;<span style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--cyan)">MACBOOK / LINUX</span><br>
+          <span style="color:#5A6578; font-size:12px;">Зажал Ctrl → аудио отправлено</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:0 16px;">
+        <span style="font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--yellow); letter-spacing:2px;">WAV</span>
+        <span style="font-size:32px; color:var(--yellow); text-shadow:var(--glow-y); animation:pulse 2s ease-in-out infinite;">⟹</span>
+        <span style="font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--yellow); letter-spacing:2px;">HTTP</span>
+        <span style="font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--yellow); letter-spacing:2px;">:9000</span>
+      </div>
+
+      <div style="background:rgba(255,231,0,0.08); border:1px solid rgba(255,231,0,0.3); padding:32px; text-align:center; position:relative;">
+        <div class="corner-deco tl"></div>
+        <div class="corner-deco br"></div>
+        <div style="font-size:36px; margin-bottom:12px;">🖥️</div>
+        <div style="font-family:'Orbitron',monospace; font-size:13px; color:var(--yellow); margin-bottom:8px;">WHISPER SERVER</div>
+        <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:#5A6578; line-height:1.8;">
+          RTX 3070 Ti<br>GPU загружена один раз<br>Всегда готова<br>
+          <span style="color:var(--cyan)">localhost:9000</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; padding-top:24px; border-top:1px solid rgba(255,231,0,0.1);">
+      <p style="color:#4A5568; font-size:13px; font-family:'Share Tech Mono',monospace; letter-spacing:1px; line-height:2;">
+        ▸ Модель загружается <span style="color:#00FF87">один раз</span> при старте Windows — сервис всегда готов<br>
+        ▸ Любой ПК в сети получает результат за <span style="color:var(--yellow)">1–3 секунды</span><br>
+        ▸ Экономит VRAM и ресурсы CPU у всех пользователей<br>
+        ▸ Если сервер недоступен — автоматический <span style="color:var(--cyan)">fallback на локальный GPU/CPU</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">
+  <div class="divider-line"></div>
+  <div class="divider-text">REMOTE_ACCESS_API</div>
+  <div class="divider-line"></div>
+</div>
+
+<!-- REMOTE ACCESS -->
+<section>
+  <div class="section-label">// REMOTE.API_ACCESS</div>
+  <h2 class="section-title">Удалённый доступ — <span>через интернет</span></h2>
+
+  <p style="color:#5A6578; margin-bottom:36px; font-size:16px; line-height:1.7;">
+    Открой порты на роутере — и получай транскрипцию на своём мощном домашнем сервере
+    <strong style="color:#C8D0E0">с любого компьютера в интернете.</strong>
+    Канал 1000 Мбит/с — ответ с переводом речи в текст фактически моментальный.
+  </p>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:3px;" class="reveal">
+    <div style="background:var(--panel); border:1px solid rgba(255,0,60,0.2); padding:32px; position:relative;">
+      <div class="corner-deco tl" style="border-color:var(--pink)"></div>
+      <div style="font-family:'Orbitron',monospace; font-size:28px; color:var(--pink); text-shadow:var(--glow-p); margin-bottom:12px;">:8765</div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--pink); letter-spacing:2px; margin-bottom:16px;">WEB_UI_PORT</div>
+      <div style="font-size:14px; color:#7A8598; line-height:1.7;">
+        Панель управления в браузере. Статистика, логи, переключение GPU — <strong style="color:#C8D0E0">доступно удалённо.</strong>
+      </div>
+    </div>
+    <div style="background:var(--panel); border:1px solid rgba(255,231,0,0.2); padding:32px; position:relative;">
+      <div class="corner-deco tl" style="border-color:var(--yellow)"></div>
+      <div style="font-family:'Orbitron',monospace; font-size:28px; color:var(--yellow); text-shadow:var(--glow-y); margin-bottom:12px;">:9000</div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--yellow); letter-spacing:2px; margin-bottom:16px;">WHISPER_API_PORT</div>
+      <div style="font-size:14px; color:#7A8598; line-height:1.7;">
+        HTTP API транскрипции. Отправляешь WAV — получаешь текст. <strong style="color:#C8D0E0">POST /transcribe.</strong>
+      </div>
+    </div>
+    <div style="background:var(--panel); border:1px solid rgba(0,245,255,0.2); padding:32px; position:relative;">
+      <div class="corner-deco tl" style="border-color:var(--cyan)"></div>
+      <div style="font-family:'Orbitron',monospace; font-size:28px; color:var(--cyan); text-shadow:var(--glow-c); margin-bottom:12px;">WAV</div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--cyan); letter-spacing:2px; margin-bottom:16px;">AUDIO_FORMAT</div>
+      <div style="font-size:14px; color:#7A8598; line-height:1.7;">
+        Лёгкий несжатый формат. Минимальные задержки при передаче — <strong style="color:#C8D0E0">ответ мгновенный.</strong>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:rgba(0,245,255,0.03); border:1px solid rgba(0,245,255,0.1); padding:24px; margin-top:3px; font-family:'Share Tech Mono',monospace; font-size:12px; color:#4A5568; line-height:2;" class="reveal">
+    ▸ Открой порты <span style="color:var(--yellow)">8765</span> и <span style="color:var(--yellow)">9000</span> на роутере<br>
+    ▸ Подключайся с любого устройства в интернете<br>
+    ▸ Сервер в Германии, канал <span style="color:#00FF87">1000 Мбит/с</span> — задержка минимальна<br>
+    ▸ Сайт и API: <a href="http://onedator.servegame.com" target="_blank" style="color:var(--cyan); text-decoration:none;">onedator.servegame.com</a>
+  </div>
+</section>
+
+<!-- GPU TABLE -->
+<section>
+  <div class="section-label">// HARDWARE.MATRIX</div>
+  <h2 class="section-title">Какая видеокарта → <span>какое качество</span></h2>
+  <p style="color:#5A6578; font-size:15px; margin-bottom:8px;">
+    При установке программа <strong style="color:#C8D0E0">автоматически определяет</strong> твою видеокарту
+    и предлагает выбрать оптимальную модель. Чем больше видеопамяти — тем лучше качество распознавания.
+  </p>
+
+  <table class="gpu-table reveal">
+    <thead>
+      <tr>
+        <th>ВИДЕОКАРТА</th>
+        <th>VRAM</th>
+        <th>ОПТИМАЛЬНАЯ МОДЕЛЬ</th>
+        <th>КАЧЕСТВО</th>
+        <th>СКОРОСТЬ (RU)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>GTX 1060 3GB / GTX 1650</td>
+        <td>3–4 ГБ</td>
+        <td><span class="model-badge model-small">small</span></td>
+        <td>отличное</td>
+        <td>~3–5 сек</td>
+      </tr>
+      <tr>
+        <td>GTX 1660 / GTX 1060 6GB</td>
+        <td>6 ГБ</td>
+        <td><span class="model-badge model-small">small</span></td>
+        <td>отличное</td>
+        <td>~2–4 сек</td>
+      </tr>
+      <tr>
+        <td>RTX 2060 / RTX 3060</td>
+        <td>6–8 ГБ</td>
+        <td><span class="model-badge model-medium">medium</span></td>
+        <td>высокое</td>
+        <td>~3–5 сек</td>
+      </tr>
+      <tr>
+        <td style="color:var(--yellow)">RTX 3070 Ti ⭐</td>
+        <td>8 ГБ</td>
+        <td><span class="model-badge model-medium">medium</span></td>
+        <td>высокое</td>
+        <td>~2–3 сек</td>
+      </tr>
+      <tr>
+        <td>RTX 2080 Ti / RTX 3080</td>
+        <td>10–11 ГБ</td>
+        <td><span class="model-badge model-large">large-v2</span></td>
+        <td>максимальное</td>
+        <td>~4–6 сек</td>
+      </tr>
+      <tr>
+        <td>RTX 3060 12GB / RTX 4070</td>
+        <td>12 ГБ</td>
+        <td><span class="model-badge model-large">large-v2</span></td>
+        <td>максимальное</td>
+        <td>~3–5 сек</td>
+      </tr>
+      <tr>
+        <td>RTX 4090 / RTX 3090</td>
+        <td>24 ГБ</td>
+        <td><span class="model-badge model-large">large-v2</span></td>
+        <td>максимальное</td>
+        <td>~2–3 сек</td>
+      </tr>
+      <tr>
+        <td>Без GPU (CPU)</td>
+        <td>—</td>
+        <td><span class="model-badge model-base">base / small</span></td>
+        <td>хорошее</td>
+        <td>~10–30 сек</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- TERMINAL -->
+<section>
+  <div class="section-label">// INSTALL.PREVIEW</div>
+  <h2 class="section-title">Как выглядит <span>установка</span></h2>
+
+  <div class="terminal reveal">
+    <div class="t-line">  Which version do you want to install?</div>
+    <div class="t-line">  [1]  whisper_from_sssDeMoNsss_RU-ENG  ← говоришь по-русски</div>
+    <div class="t-line">  [2]  whisper_from_sssDeMoNsss_ENG-RU  ← говоришь по-английски</div>
+    <div class="t-line">  Enter 1 or 2: <span class="t-ok">1</span></div>
+    <br>
+    <div class="t-ok">  [OK]  Python 3.12 found</div>
+    <div class="t-ok">  [OK]  FFmpeg installed</div>
+    <div class="t-ok">  [OK]  whisper_platform installed</div>
+    <br>
+    <div class="t-warn">  GPU Analysis — 2 GPU(s) detected:</div>
+    <div class="t-line">  GPU 0: RTX 3070 Ti — 8 GB</div>
+    <div class="t-line">  GPU 1: RTX 2060 Super — 8 GB</div>
+    <br>
+    <div class="t-line">  Model capabilities for GPU 0 (RTX 3070 Ti):</div>
+    <div class="t-ok">  [OK]  tiny    BASIC quality</div>
+    <div class="t-ok">  [OK]  base    GOOD quality</div>
+    <div class="t-ok">  [OK]  small   GREAT quality</div>
+    <div class="t-ok">  [OK]  medium  HIGH quality     ← RECOMMENDED</div>
+    <div class="t-line">  [--]  large-v2  нужно 10 GB VRAM</div>
+    <br>
+    <div class="t-warn">  Select model (1-5): <span class="t-ok">4</span></div>
+    <br>
+    <div class="t-ok">  [OK]  config.toml updated: model = "medium"</div>
+    <div class="t-ok">  [OK]  PyTorch CUDA 11.8 installed</div>
+    <div class="t-ok">  [OK]  Desktop shortcut created</div>
+    <br>
+    <div class="t-rec">  ▸ INSTALLATION COMPLETE</div>
+    <div class="t-line">  Launch whisper_from_sssDeMoNsss now? (y/n): <span class="t-ok">y</span><span class="t-cursor"></span></div>
+  </div>
+</section>
+
+<!-- AUTHOR -->
+<div class="author-section reveal">
+  <div class="section-label" style="justify-content:center; margin-bottom:24px">// CREATOR.ID</div>
+  <div class="author-name">sssDeMoNsss</div>
+  <div class="author-tagline">whisper_from_sssDeMoNsss — говори, не печатай.</div>
+
+  <div style="margin-bottom:32px; display:flex; flex-direction:column; gap:10px; align-items:center;">
+    <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--yellow); letter-spacing:2px; opacity:0.8;">
+      ⊡ ПОДДЕРЖКА 24/7
+    </div>
+    <div style="font-size:14px; color:#5A6578;">
+      Вопросы по работе программы — Telegram: <span style="color:var(--cyan)">@ONEDATOR</span>
+    </div>
+    <div style="font-size:14px; color:#5A6578;">
+      Сайт проекта: <a href="http://onedator.servegame.com" target="_blank" style="color:var(--yellow); text-decoration:none;">onedator.servegame.com</a>
+    </div>
+  </div>
+
+  <div class="author-links">
+    <a href="https://vk.com/basset2"                  class="author-link" target="_blank">⊞ VK.COM/BASSET2</a>
+    <a href="https://t.me/snnike"                     class="author-link" target="_blank">✈ TELEGRAM @SNNIKE</a>
+    <a href="https://t.me/ONEDATOR"                   class="author-link" target="_blank" style="border-color:rgba(255,231,0,0.3); color:var(--yellow);">💬 ПОДДЕРЖКА @ONEDATOR</a>
+    <a href="http://onedator.servegame.com"            class="author-link" target="_blank" style="border-color:rgba(255,231,0,0.3); color:var(--yellow);">🌐 САЙТ ПРОЕКТА</a>
+  </div>
+</div>
+
+<footer>
+  whisper_from_sssDeMoNsss // LOCAL VOICE INPUT SYSTEM // WIN+H REPLACEMENT // sssDeMoNsss // onedator.servegame.com
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Random glitch flicker on stats
+  setInterval(() => {
+    const vals = document.querySelectorAll('.stat-value');
+    const r = vals[Math.floor(Math.random() * vals.length)];
+    r.style.opacity = '0.3';
+    setTimeout(() => r.style.opacity = '1', 60);
+  }, 3000);
+
+  // Cursor trail
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:9998;opacity:0.4';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  const dots = [];
+  document.addEventListener('mousemove', e => {
+    dots.push({ x: e.clientX, y: e.clientY, life: 1 });
+    if (dots.length > 30) dots.shift();
+  });
+
+  function drawTrail() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dots.forEach((d, i) => {
+      d.life -= 0.04;
+      if (d.life <= 0) return;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,245,255,${d.life * 0.6})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(drawTrail);
+  }
+  drawTrail();
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+
+# ══════════════════════════════════════════════════════════════
+# REMOTE TRANSCRIPTION SERVER (udalyonny server transkriptsii)
+# ══════════════════════════════════════════════════════════════
+# Set enabled = true to send audio to your HA server GPU
+# (Ustanovite enabled = true chtob otpravlyat audio na GPU servera)
+#
+# 1. On HA server run: bash install-whisper-server.sh
+#    (Na servere HA zapustite: bash install-whisper-server.sh)
+# 2. Set url to your server IP/hostname + port 9000
+#    (Ukazite IP/imya servera + port 9000)
+# 3. Set enabled = true
+# 4. Restart whisper-ptt.py — local GPU will NOT be loaded
+#    (Perezapustite whisper-ptt.py — lokalny GPU zagruzhen NE budet)
+#
+# Health check (proverka): http://homeassistant.local:9000/health
+[remote]
+enabled = false
+url = "http://homeassistant.local:9000"
+timeout = 12  # авто-восстановление: если сервер не ответил за 12 сек — переключаемся на локальную модель
+
+# Whisper Push-to-Talk Конфигурация для RTX 3070 Ti
+[hotkey]
+# ВНИМАНИЕ: Win+H конфликтует с голосовым вводом Windows
+# Рекомендуется использовать другую комбинацию
+# Варианты: ctrl_r, alt_r, shift_r, f13-f24, или комбинации
+key = "ctrl_r"
+
+# Клавиша для режима ПЕРЕВОДА (RU → EN)
+# Зажать → говорить по-русски → отпустить → текст вставится на АНГЛИЙСКОМ
+# По умолчанию: Правый Alt
+translate_key = "alt_r"
+
+[whisper]
+# Модель для русского языка
+# Для GPU можно использовать более точные модели:
+# base = быстро, хорошо (1 сек на RTX 3070 Ti)
+# small = точнее, всё ещё быстро (1-2 сек на RTX 3070 Ti)
+# medium = очень точно (2-3 сек на RTX 3070 Ti) и очень качественный голосовой ввод.
+# large-v2 = максимально точно (8-12 сек). Требуется 5090 ti для быстрой работы этой модели.
+model = "medium"
+
+# Язык
+language = "ru"
+
+# УСТРОЙСТВО ДЛЯ ВЫЧИСЛЕНИЙ
+# auto   = определяется автоматически (рекомендуется)
+# cuda   = NVIDIA GPU (Windows / Linux)
+# mps    = Apple Silicon GPU (macOS M1/M2/M3/M4)
+# cpu    = процессор (любая платформа, медленнее)
+device = "auto"
+compute_type = "int8" 
+
+# Фильтр голосовой активности
+vad_filter = true
+vad_min_silence_duration_ms = 800
+
+[audio]
+sample_rate = 16000
+channels = 1
+
+[paste]
+method = "both"
+add_trailing_space = true
+auto_capitalize = true
+
+[notifications]
+enabled = true
+show_recording = false
+show_transcribing = true
+show_result = true
+
+[tray]
+enabled = true
+
+[logging]
+verbose = false
+show_audio_diagnostics = false
+show_transcription_diagnostics = false

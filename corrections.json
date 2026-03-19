@@ -1,0 +1,38 @@
+{
+  "_comment": "Whisper PTT — словарь пользовательских замен. Редактируется через WebUI.",
+  "_version": 1,
+  "corrections": [
+    {
+      "id": 1,
+      "pattern": "докер",
+      "replacement": "Docker",
+      "regex": false,
+      "enabled": true,
+      "description": "Название технологии"
+    },
+    {
+      "id": 2,
+      "pattern": "гит",
+      "replacement": "Git",
+      "regex": false,
+      "enabled": true,
+      "description": "Система контроля версий"
+    },
+    {
+      "id": 3,
+      "pattern": "питон",
+      "replacement": "Python",
+      "regex": false,
+      "enabled": true,
+      "description": "Язык программирования"
+    },
+    {
+      "id": 4,
+      "pattern": "жэпэтэ",
+      "replacement": "ChatGPT",
+      "regex": false,
+      "enabled": true,
+      "description": "AI ассистент"
+    }
+  ]
+}
